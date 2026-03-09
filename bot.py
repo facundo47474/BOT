@@ -107,7 +107,10 @@ def run_bot(headless=None, on_entrada_disponible=None, on_error=None, stop_flag=
         stop_flag = Dummy()
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=headless)
+        browser = p.chromium.launch(
+            headless=headless,
+            args=["--no-sandbox", "--disable-setuid-sandbox"] if headless else []
+        )
         context = browser.new_context(locale="es-AR")
         page = context.new_page()
 

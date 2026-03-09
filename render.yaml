@@ -2,11 +2,11 @@ services:
   - type: web
     name: boca-bot
     env: docker
-    dockerfilePath: ./Dockerfile
+    plan: free
     envVars:
-      - key: BOCA_HEADLESS
-        value: 1
       - key: BOCA_EMAIL
         sync: false
       - key: BOCA_PASSWORD
         sync: false
+      - key: PORT
+        value: 5000

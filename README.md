@@ -25,17 +25,6 @@ Desplegá el bot en Railway o Render. Funciona 24/7 y podés controlarlo desde c
 
 ### Render
 
-1. Creá una cuenta en [render.com](https://render.com).
-2. **New** → **Web Service**.
-3. Conectá tu repo de GitHub o usá la opción de subir código.
-4. En **Environment** → **Environment Variables** agregá:
-   - `BOCA_EMAIL` = tu email
-   - `BOCA_PASSWORD` = tu contraseña
-5. Deploy. Te dan una URL tipo `https://boca-bot.onrender.com`.
-6. Abrí esa URL e instalá la app.
-
-### Uso en nube
-
 1. Entrá a la URL de tu deploy (desde celular o PC).
 2. Tocá **"Iniciar bot"**. El bot corre en el servidor.
 3. Cuando haya entradas, verás **"Ir a completar compra"**. Tocá para ir a Boca Socios y terminar la compra.
