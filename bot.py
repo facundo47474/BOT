@@ -34,7 +34,6 @@ def get_credenciales():
 def login(page, email, password):
     """Intenta hacer login en Boca Socios."""
     page.goto(URL_SOCIOS, wait_until="networkidle", timeout=30000)
-    time.sleep(2)
 
     try:
         inp_email = page.locator(SELECTOR_EMAIL).first

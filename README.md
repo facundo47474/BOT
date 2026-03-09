@@ -25,22 +25,37 @@ Desplegá el bot en Railway o Render. Funciona 24/7 y podés controlarlo desde c
 
 ### Render
 
-1. Entrá a la URL de tu deploy (desde celular o PC).
-2. Tocá **"Iniciar bot"**. El bot corre en el servidor.
-3. Cuando haya entradas, verás **"Ir a completar compra"**. Tocá para ir a Boca Socios y terminar la compra.
-4. Podés instalar como app (PWA) para tenerla en la pantalla de inicio.
+Seguí estos pasos para desplegar en Render:
 
----
+1.  **Subir a GitHub:** Asegurate de que todos los archivos del proyecto (`Dockerfile`, `render.yaml`, etc.) estén en tu repositorio de GitHub.
+2.  **Crear Servicio en Render:**
+    *   En tu panel de Render, hacé clic en el botón **"New +"** y seleccioná **"Web Service"**.
+    *   Conectá tu cuenta de GitHub y seleccioná el repositorio del bot.
+3.  **Configuración Inicial:**
+    *   Dale un nombre a tu servicio (ej: `boca-bot`).
+    *   Render debería detectar que es un `Dockerfile`, así que la configuración del "Environment" y "Build Command" debería ser automática.
+    *   Hacé clic en **"Create Web Service"**. El primer despliegue probablemente falle porque faltan las credenciales, ¡no te preocupes!
+4.  **Agregar Credenciales (Paso Clave):**
+    *   Una vez creado el servicio, andá a la pestaña **"Environment"**.
+    *   Hacé clic en **"Add Environment Variable"** y agregá la primera variable:
+        *   **Key:** `BOCA_EMAIL`
+        *   **Value:** `tu-email-de-socio`
+    *   Hacé clic de nuevo en **"Add Environment Variable"** para la segunda:
+        *   **Key:** `BOCA_PASSWORD`
+        *   **Value:** `tu-contraseña`
+5.  **Desplegar de Nuevo:**
+    *   Después de guardar las variables, andá a la pestaña **"Deploys"** y hacé clic en **"Deploy latest commit"** para volver a lanzar el despliegue, esta vez con las credenciales correctas.
+    *   Una vez que termine, la URL pública de tu bot aparecerá en la parte superior del dashboard.
 
-## Opción 2: Local (con tu PC)
+## Opción 2: Local (usando tu PC)
 
 Si preferís correrlo en tu casa sin usar la nube:
 
-1. **Instalar dependencias**
+1.  **Instalar dependencias**
    ```bash
-   cd "c:\Users\Usuario\Documents\libros\Testing QA\BOT"
-   python -m venv venv
-   venv\Scripts\activate
+   # Navegá a la carpeta donde descargaste el proyecto
+   python -m venv venv                # Crea un entorno virtual
+   venv\Scripts\activate              # Activa el entorno (en Windows)
    pip install -r requirements.txt
    playwright install chromium
    ```
