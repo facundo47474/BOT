@@ -89,12 +89,13 @@ def intentar_reservar(page, locator_entrada):
         return False
 
 
-def run_bot(headless=None, on_entrada_disponible=None, on_error=None, stop_flag=None):
+def run_bot(headless=None, on_entrada_disponible=None, on_status_update=None, on_error=None, stop_flag=None):
     """
     Ejecuta el flujo: login, recarga en bucle, al detectar entrada reserva y notifica.
     headless: True en nube (sin ventana). Si None, usa env BOCA_HEADLESS.
     on_entrada_disponible(url): callback cuando reservó, recibe URL de checkout.
     on_error(err): callback con mensaje de error.
+    on_status_update(msg): callback para reportar progreso.
     stop_flag: objeto con .is_set() para parar el bucle (ej. threading.Event).
     """
     email, password = get_credenciales()
@@ -114,7 +115,11 @@ def run_bot(headless=None, on_entrada_disponible=None, on_error=None, stop_flag=
         page = context.new_page()
 
         try:
+            if on_status_update:
+                on_status_update("Iniciando sesión en Boca Socios...")
             login(page, email, password)
+            if on_status_update:
+                on_status_update("Login exitoso. Buscando entradas...")
         except Exception as e:
             if on_error:
                 on_error(str(e))
@@ -132,11 +137,16 @@ def run_bot(headless=None, on_entrada_disponible=None, on_error=None, stop_flag=
                 except Exception as e:
                     if on_error:
                         on_error(f"Error al recargar: {e}")
+                    if on_status_update:
+                        on_status_update("Error al recargar, reintentando...")
                     time.sleep(INTERVALO_RECARGA)
                     continue
 
             encontrado, loc = hay_opcion_entrada(page)
             if encontrado and loc:
+                if on_status_update:
+                    on_status_update("¡Opción de compra encontrada! Reservando lugar...")
+
                 intentar_reservar(page, loc)
                 page.wait_for_load_state("networkidle", timeout=10000) # Esperar a que la página cargue tras el clic
                 checkout_url = page.url
@@ -148,6 +158,9 @@ def run_bot(headless=None, on_entrada_disponible=None, on_error=None, stop_flag=
                 if on_entrada_disponible:
                     on_entrada_disponible(checkout_url)
                 break
+
+            if recargas % 5 == 0 and on_status_update:
+                on_status_update(f"Buscando entradas... (Ciclo #{recargas})")
 
             time.sleep(INTERVALO_RECARGA)
 

@@ -71,6 +71,24 @@ Si preferís correrlo en tu casa sin usar la nube:
 
 ---
 
+## Cómo funciona y qué significan los mensajes
+
+- **"Inactivo"**: El bot está detenido.
+
+- **"Iniciando sesión en Boca Socios..."**: El bot está intentando entrar a tu cuenta.
+
+- **"Login exitoso. Buscando entradas..."**: El bot ya entró y está recargando la página en busca de entradas. Este es el estado normal de búsqueda.
+
+- **"Buscando entradas... (Ciclo #XX)"**: Actualización periódica para confirmar que el bot sigue activo y buscando.
+
+- **"¡Opción de compra encontrada! Reservando lugar..."**: El bot vio un botón de compra y está haciendo clic para asegurarte un lugar.
+
+- **"¡Entrada disponible!..."**: ¡Éxito! El bot reservó. Ahora te toca a vos. El botón "Ir a completar compra" te llevará a la página para que finalices el proceso.
+
+- **"Error: ..."**: Ocurrió un problema (credenciales incorrectas, la página cambió, etc.). Revisa los logs en Render para más detalles.
+
+---
+
 ## Instalar como app (PWA)
 
 | Dispositivo | Cómo instalar |

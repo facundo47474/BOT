@@ -41,6 +41,10 @@ def _on_error(err):
     estado["corriendo"] = False
 
 
+def _on_status_update(msg):
+    estado["mensaje"] = msg
+
+
 @app.route("/")
 def index():
     return render_template_string(HTML_TEMPLATE)
@@ -77,6 +81,7 @@ def api_iniciar():
         kwargs={
             "headless": EN_NUBE,
             "on_entrada_disponible": _on_entrada,
+            "on_status_update": _on_status_update,
             "on_error": _on_error,
             "stop_flag": stop_event,
         },
