@@ -18,19 +18,27 @@ URL_MAIN = "https://www.bocajuniors.com.ar/"
 SELECTOR_EMAIL = 'input[type="email"], input[name="email"], input[placeholder*="mail" i], input[id*="email" i]'
 SELECTOR_PASSWORD = 'input[type="password"], input[name="password"], input[placeholder*="contraseña" i]'
 SELECTOR_BTN_LOGIN = 'button[type="submit"], button:has-text("Ingresar"), button:has-text("Entrar"), a:has-text("Ingresar")'
-# Textos o enlaces que indican que hay entradas disponibles
-TEXTOS_ENTRADA_REGEX = r"comprar|reservar|entrada|adquirir|ticket|disponible"
+
+# --- NUEVOS SELECTORES PARA EL FLUJO DE COMPRA ---
+SELECTOR_VER_MAS = 'a:has-text("Ver más")'
+SELECTOR_OBTENER_PLATEAS = 'a:has-text("Obtener Platea")'
+# Suposición: los lugares disponibles son SVG verdes o tienen una clase "disponible". Ajustar si es necesario.
+SELECTOR_LUGAR_DISPONIBLE = '[class*="disponible"], [class*="available"], [fill*="green"]'
+
 # Intervalo entre recargas (segundos). No bajar mucho para no saturar el sitio.
 INTERVALO_RECARGA = 3
 
 
-def get_credenciales():
+def get_config():
+    """Carga email, password y cantidad de entradas desde el entorno."""
     email = os.getenv("BOCA_EMAIL", "").strip()
     password = os.getenv("BOCA_PASSWORD", "").strip()
+    # Por defecto, busca 1 entrada si no se especifica.
+    cantidad_entradas = int(os.getenv("BOCA_CANTIDAD_ENTRADAS", "1"))
 
     if not email or not password:
         raise ValueError("Faltan BOCA_EMAIL o BOCA_PASSWORD en el archivo .env")
-    return email, password
+    return email, password, cantidad_entradas
 
 
 def login(page, email, password):
@@ -71,26 +79,6 @@ def login(page, email, password):
     return True
 
 
-def hay_opcion_entrada(page):
-    """Comprueba si en la página hay algún botón/enlace para comprar o reservar entrada."""
-    try:
-        # Usamos una expresión regular para buscar varios textos a la vez, de forma insensible a mayúsculas.
-        loc = page.locator("a, button").filter(has_text=re.compile(TEXTOS_ENTRADA_REGEX, re.IGNORECASE)).first
-        loc.wait_for(state="visible", timeout=1000) # Timeout corto para no demorar la recarga
-        return True, loc
-    except PlaywrightTimeout:
-        return False, None
-
-
-def intentar_reservar(page, locator_entrada):
-    """Hace clic en el primer elemento de compra/reserva encontrado."""
-    try:
-        locator_entrada.click(timeout=5000)
-        return True
-    except (PlaywrightTimeout, Exception): # Ser más explícito en la excepción
-        return False
-
-
 def run_bot(headless=None, on_entrada_disponible=None, on_status_update=None, on_error=None, stop_flag=None):
     """
     Ejecuta el flujo: login, recarga en bucle, al detectar entrada reserva y notifica.
@@ -101,7 +89,7 @@ def run_bot(headless=None, on_entrada_disponible=None, on_status_update=None, on
     stop_flag: objeto con .is_set() para parar el bucle (ej. threading.Event).
     """
     try:
-        email, password = get_credenciales()
+        email, password, cantidad_entradas = get_config()
         if headless is None:
             headless = os.getenv("BOCA_HEADLESS", "").lower() in ("1", "true", "yes")
         if stop_flag is None:
@@ -150,22 +138,45 @@ def run_bot(headless=None, on_entrada_disponible=None, on_status_update=None, on
                         time.sleep(INTERVALO_RECARGA)
                         continue
 
-                encontrado, loc = hay_opcion_entrada(page)
-                if encontrado and loc:
-                    if on_status_update:
-                        on_status_update("¡Opción de compra encontrada! Reservando lugar...")
+                # --- INICIO NUEVA LÓGICA DE BÚSQUEDA ---
+                try:
+                    # Paso 1: Buscar y hacer clic en "Ver más". Falla si no hay entradas.
+                    page.locator(SELECTOR_VER_MAS).first.click(timeout=5000)
 
-                    intentar_reservar(page, loc)
-                    page.wait_for_load_state("networkidle", timeout=10000) # Esperar a que la página cargue tras el clic
-                    checkout_url = page.url
-                    if not headless:
-                        try:
-                            page.evaluate("alert('¡ENTRADA DISPONIBLE! El bot reservó lugar. Completa la compra en esta ventana ahora.')")
-                        except Exception:
-                            pass
-                    if on_entrada_disponible:
-                        on_entrada_disponible(checkout_url)
-                    break
+                    # Paso 2: Buscar y hacer clic en "Obtener Platea"
+                    if on_status_update:
+                        on_status_update("Navegando a plateas...")
+                    page.locator(SELECTOR_OBTENER_PLATEAS).first.click(timeout=5000)
+
+                    # Paso 3: En el mapa, buscar y seleccionar la cantidad de lugares disponibles
+                    if on_status_update:
+                        on_status_update("Buscando lugar disponible en el mapa...")
+                    
+                    lugares_disponibles = page.locator(SELECTOR_LUGAR_DISPONIBLE)
+                    
+                    # Esperamos a que al menos un lugar esté visible
+                    lugares_disponibles.first.wait_for(state="visible", timeout=10000)
+
+                    # ANTES DE HACER CLIC, VERIFICAMOS SI HAY SUFICIENTES ASIENTOS
+                    if lugares_disponibles.count() >= cantidad_entradas:
+                        if on_status_update:
+                            on_status_update(f"¡Lugar disponible encontrado! Seleccionando {cantidad_entradas} entrada(s)...")
+
+                        # Hacemos clic en los lugares la cantidad de veces necesaria
+                        for i in range(cantidad_entradas):
+                            lugares_disponibles.nth(i).click()
+                            time.sleep(0.5) # Pequeña pausa entre clics
+
+                        # Si llegamos acá, es un éxito. Notificamos y salimos.
+                        page.wait_for_load_state("networkidle", timeout=15000)
+                        if on_entrada_disponible:
+                            on_entrada_disponible(page.url)
+                        break # Salimos del bucle principal
+                    # Si no hay suficientes asientos, no hacemos nada y el bucle de recarga continuará.
+
+                except PlaywrightTimeout:
+                    # Si algún paso falla (porque no hay entradas), simplemente continuamos con el siguiente ciclo.
+                    pass
 
                 if recargas % 5 == 0 and on_status_update:
                     on_status_update(f"Buscando entradas... (Ciclo #{recargas})")

@@ -8,5 +8,7 @@ services:
         sync: false
       - key: BOCA_PASSWORD
         sync: false
+      - key: BOCA_CANTIDAD_ENTRADAS
+        sync: false
       - key: PORT
         value: 5000

@@ -43,6 +43,9 @@ Seguí estos pasos para desplegar en Render:
     *   Hacé clic de nuevo en **"Add Environment Variable"** para la segunda:
         *   **Key:** `BOCA_PASSWORD`
         *   **Value:** `tu-contraseña`
+    *   Agregá una tercera variable para la cantidad de entradas:
+        *   **Key:** `BOCA_CANTIDAD_ENTRADAS`
+        *   **Value:** `1` (o `2`, `3`, etc., según cuántas quieras)
 5.  **Desplegar de Nuevo:**
     *   Después de guardar las variables, andá a la pestaña **"Deploys"** y hacé clic en **"Deploy latest commit"** para volver a lanzar el despliegue, esta vez con las credenciales correctas.
     *   Una vez que termine, la URL pública de tu bot aparecerá en la parte superior del dashboard.
@@ -60,7 +63,10 @@ Si preferís correrlo en tu casa sin usar la nube:
    playwright install chromium
    ```
 
-2. **Credenciales** en `.env` (ya configurado).
+2. **Configuración:** Creá un archivo `.env` en la carpeta del proyecto y agregá:
+   `BOCA_EMAIL=tu-email`
+   `BOCA_PASSWORD=tu-contraseña`
+   `BOCA_CANTIDAD_ENTRADAS=1`
 
 3. **Iniciar**
    ```bash
@@ -79,9 +85,13 @@ Si preferís correrlo en tu casa sin usar la nube:
 
 - **"Login exitoso. Buscando entradas..."**: El bot ya entró y está recargando la página en busca de entradas. Este es el estado normal de búsqueda.
 
-- **"Buscando entradas... (Ciclo #XX)"**: Actualización periódica para confirmar que el bot sigue activo y buscando.
+- **"Buscando entradas... (Ciclo #XX)"**: Es una señal de que el bot está vivo y trabajando. Cada "ciclo" es una recarga de la página de Boca Socios. Para no saturar la pantalla, este mensaje se actualiza cada 5 ciclos, confirmando que el bot no se ha colgado.
 
-- **"¡Opción de compra encontrada! Reservando lugar..."**: El bot vio un botón de compra y está haciendo clic para asegurarte un lugar.
+- **"Navegando a plateas..."**: El bot encontró la opción de "Ver más" y ahora está yendo a la sección de plateas.
+
+- **"Buscando lugar disponible en el mapa..."**: El bot está en la página del estadio y está analizando el mapa en busca de un asiento verde.
+
+- **"¡Lugar disponible encontrado! Seleccionando X entrada(s)..."**: ¡Éxito parcial! El bot vio asientos libres y está haciendo clic para reservarlos según la cantidad que configuraste.
 
 - **"¡Entrada disponible!..."**: ¡Éxito! El bot reservó. Ahora te toca a vos. El botón "Ir a completar compra" te llevará a la página para que finalices el proceso.
 
