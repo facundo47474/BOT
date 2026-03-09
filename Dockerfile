@@ -1,5 +1,5 @@
 # Usamos la imagen oficial de Playwright que ya incluye Python y los navegadores
-FROM mcr.microsoft.com/playwright/python:v1.41.0-jammy
+FROM mcr.microsoft.com/playwright/python:v1.58.0-jammy
 
 # Directorio de trabajo
 WORKDIR /app
